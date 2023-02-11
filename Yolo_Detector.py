@@ -1,6 +1,3 @@
-__author__ = "Akshay Joshi | Poojitha Vijayanarasimha"
-__email__ = "s8akjosh@stud.uni-saarland.de | poojitha.vijayanarasimha@stud.fra-uas.de"
-
 import numpy as np
 import argparse
 import imutils
@@ -38,7 +35,6 @@ def clear_logs():
 
 # load the COCO class labels our YOLO model was trained on
 labelsPath = os.path.sep.join([args["yolo"], "coco.names"])
-#labelsPath = r"D:\yolo-object-detection\yolo-coco\coco.names"
 LABELS = open(labelsPath).read().strip().split("\n")
 
 # initialize a list of colors to represent each possible class label
@@ -60,10 +56,10 @@ net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
 ln = net.getLayerNames()
-ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+ln = [ln[i - 1] for i in net.getUnconnectedOutLayers()]
 
-# initialize the video stream, pointer to output video file, and frame dimensions 
-vs = cv2.VideoCapture(args["input"])
+# initialize the video stream, pointer to output video file, and frame dimensions
+vs = cv2.VideoCapture(0)
 writer = None
 (W, H) = (None, None)
 
@@ -106,8 +102,7 @@ for fr in tqdm(range(total)):
 	# construct a blob from the input frame and then perform a forward
 	# pass of the YOLO object detector, giving us our bounding boxes
 	# and associated probabilities
-	blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (416, 416),
-		swapRB=True, crop=False)
+	blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (416, 416),swapRB=True, crop=False)
 	net.setInput(blob)
 	start = time.time()
 	layerOutputs = net.forward(ln)
@@ -159,9 +154,29 @@ for fr in tqdm(range(total)):
 
 	# ensure at least one detection exists
 	if len(idxs) > 0:
-		# loop over the indexes we are keeping
-		var1 = 0
+		# loop over the indexes we are keeping=0
 		var = []
+		lane1 =0
+		lane2 =0
+		x1 = 235
+		y1 = 50
+
+		x2 =15
+		y2 = 250
+
+		x3 = 285
+		y3 = 50
+
+		x4 = 265
+		y4 = 250
+
+		x5 =350
+		y5 = 50
+
+		x6 = 500
+		y6 = 250
+		def check ( y,x1,x2,y1,y2):
+			return int((((x2-x1)/(y2-y1))*(y-y1))+x1)
 		for i in idxs.flatten():
 			# extract the bounding box coordinates
 			(x, y) = (boxes[i][0], boxes[i][1])
@@ -169,103 +184,47 @@ for fr in tqdm(range(total)):
 
 			# draw a bounding box rectangle and label on the frame
 			color = [int(c) for c in COLORS[classIDs[i]]]
-			cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+			cv2.rectangle(frame, (x, y), (x + w, y + h), color, 1)
+			# cv2.rectangle(frame, (150, 230), (650,400), (0, 0, 0xFF), 1)
+			cv2.line(frame, (x1, y1), (x2, y2), (color), 1)
+			cv2.line(frame, (x3, y3), (x4, y4), (color), 2)
+			cv2.line(frame, (x5, y5), (x6, y6), (color), 1)
 			text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-			cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-			cv2.line(frame, (415, 361), (615, 361), (0, 0, 0xFF), 3)
-			cv2.line(frame, (670, 361), (843, 361), (0, 0, 0xFF), 3)
+			# cv2.line(frame, (415, 361), (6150, 361), (0, 0, 0xFF), 3)
+			cv2.line(frame, (x1, y1), (x5, y5), (0, 0, 0xFF), 1)
+			# cv2.line(frame, (670, 300), (843, 300), (0, 0, 0xFF), 3)
+			cv2.line(frame, (x2, y2), (x6, y6), (0, 0, 0xFF), 1)
 			freq1 = [j for j in classIDs]
 			#freq = [[LABELS[classIDs[x]], classIDs.count(x)] for x in set(classIDs)]
 			freq = dict([LABELS[x], classIDs.count(x)] for x in set(classIDs))
 			#print("Class:", freq, freq1)
 			freq = str(freq)[1:-1]
-			text1 = ("Overall Vehicles in Frame = {}".format(freq))
-			cv2.putText(frame, text1, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (209, 80, 0, 255), 2)
-			cv2.putText(frame,"IN: ",(363, 355),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 2)
-			cv2.putText(frame, "OUT: ", (850, 355), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 2)
-			#var1 = var1 + 1 if y > 350 else var1
-			
-			"""
-			if y > 349 and y < 352:
-				var1 = var1 + 1
-				f = open(r"D:\yolo-object-detection\iter.txt", "a")
-				f.write(str(var1))
-				f.close()
-				f = open(r"D:\yolo-object-detection\iter.txt", "r")
-				var1 = f.read()
-				f.close()
-				var1 = sum(int(var1))
-				text2 = "{}".format(var1)
-				cv2.putText(frame,text2,(975, 350),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0, 0, 0xFF),2)
-				if y != 349 and y < 349:
-					try:
-						f = open(r"D:\yolo-object-detection\iter.txt", "r")
-						var1 = f.read()
-						f.close()
-						var1 = sum(int(var1))
-						text2 = "{}".format(var1)
-						cv2.putText(frame,text2,(975, 350),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0, 0, 0xFF),2)
-					except:
-						var1 = 0
-			else:
-				text2 = "{}".format(var1)
-				cv2.putText(frame,text2,(975, 350),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0, 0, 0xFF),2)
-			"""
+			# text1 = ("Overall Vehicles in Frame = {}".format(freq))
+			x = (x+(w/2))
+			y = (y+(h/2))
+
+
 			var = 1
-			
-			#Detect Vehicles in Lane 1 (IN)
-			if (x > 400 and x < 620 and y > 360 and y < 362.5):
-				cv2.line(frame, (415, 361), (615, 361), (0, 0xFF, 0), 7)
-				f = open(os.path.sep.join([args["inlog"], "In.txt"]), "a")
-				f.write("%d\n" %var)
-				#print("IN Dump Val:{}".format(var))
-				f.close()
-				var1 = sum([int(s.strip()) for s in open(os.path.sep.join([args["inlog"], "In.txt"]), "r").readlines()])
-				#print("IN Read Val:{}".format(var1))
-				text2 = "{}".format(var1)
-				cv2.putText(frame,text2,(390, 355),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 2)
-				f.close()
 
-			else:
-				try:
-					var1 = sum([int(s.strip()) for s in open(os.path.sep.join([args["inlog"], "In.txt"]), "r").readlines()])
-					text2 = "{}".format(var1)
-					cv2.putText(frame,text2,(390, 355),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0, 0, 0xFF), 2)
-					f.close()
-				except:
-					var1 = 0
-					text2 = "{}".format(var1)
-					cv2.putText(frame,text2,(390, 355),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 2)
+			if (y1<y and y<y2):
+				# print(x,y)
+				if(check(y,x1,x2,y1,y2)<x and x<check(y,x3,x4,y3,y4)):
+					if(classIDs[i]==2 or classIDs[i]==3 or classIDs[i]==5 or classIDs[i]==7):
+						# print(x,y)
+						lane1 = lane1 + 1
 
-			
-			#Detect Vehicles in Lane 2 (OUT)
-			if (x > 670 and x < 845 and y > 360 and y < 362.5):
-				cv2.line(frame, (670, 361), (843, 361), (0, 0xFF, 0), 7)
-				f = open(os.path.sep.join([args["outlog"], "Out.txt"]), "a")
-				f.write("%d\n" %var)
-				#print("OUT Dump Val:{}".format(var))
-				f.close()
-				var1 = sum([int(s.strip()) for s in open(os.path.sep.join([args["outlog"], "Out.txt"]), "r").readlines()])
-				#print("OUT Read Val:{}".format(var1))
-				text2 = "{}".format(var1)
-				cv2.putText(frame,text2,(895, 355),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 2)
-				f.close()
+				if(check(y,x3,x4,y3,y4)<x and x<check(y,x5,x6,y5,y6)):
+					if(classIDs[i]==2 or classIDs[i]==3 or classIDs[i]==5 or classIDs[i]==7):
+						# print(x,y)
+						lane2 = lane2 + 1
 
-			else:
-				try:
-					var1 = sum([int(s.strip()) for s in open(os.path.sep.join([args["outlog"], "Out.txt"]), "r").readlines()])
-					text2 = "{}".format(var1)
-					cv2.putText(frame,text2,(895, 355),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0, 0, 0xFF), 2)
-					f.close()
-				except:
-					var1 = 0
-					text2 = "{}".format(var1)
-					cv2.putText(frame,text2,(895, 355),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 2)
-				
-				
-			#var.append(1) if y > 350 else 0
-			
 
+		text1 = "{}".format(lane1)
+		cv2.putText(frame, text1, (235, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 1)
+		text2 = "{}".format(lane2)
+		cv2.putText(frame, text2, (290, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0xFF), 1)
+
+		# print(lane1)
 	# check if the video writer is None
 	if writer is None:
 		# initialize our video writer
