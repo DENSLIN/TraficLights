@@ -1,4 +1,4 @@
-imutils
+tf
 opencv-contrib-python
 numpy
 tqdm
